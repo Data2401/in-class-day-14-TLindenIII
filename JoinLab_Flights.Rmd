@@ -5,10 +5,9 @@ date: "DATA 2401"
 output: html_document
 ---
 
-
 # Joins and `dplyr` practice
 
-Load the `"nycflights13"` package.  You'll also need to load `dplyr` or `tidyverse`, if you didn't above.
+Load the `"nycflights13"` package. You'll also need to load `dplyr` or `tidyverse`, if you didn't above.
 
 ```{r}
 library(tidyverse)
@@ -20,53 +19,41 @@ my_flights <- na.omit(my_flights) ## this dataset has data on cancelled flights 
 
 ```
 
-
-Create a dataframe of the average arrival delays for each _destination_
+Create a dataframe of the average arrival delays for each *destination*
 
 ```{r}
-
+avg_arr_delays <- my_flights %>% group_by(dest) %>% summarize(avgArrDelay = mean(arr_delay))
 ```
 
 Then use `left_join()` to join on the "airports" dataframe, which has the airport information.
 
 ```{r}
-
+left_join(avg_arr_delays, airports, join_by(dest == faa))
 ```
 
-
-Note here: the column names don't match anymore! 
+Note here: the column names don't match anymore!
 
 Which airport had the largest average arrival delay?
 
 ```{r}
-
+left_join(avg_arr_delays, airports, join_by(dest == faa)) %>% filter(avgArrDelay == max(avgArrDelay))
 ```
 
-
-
-What is the average departure delay for each airline? To answer this with something more than just the FAA code of the airline name, you need to create a dataframe of the average departure delay for each _airline_, then use `left_join()` to join on the "airlines" dataframe
-
+What is the average departure delay for each airline? To answer this with something more than just the FAA code of the airline name, you need to create a dataframe of the average departure delay for each *airline*, then use `left_join()` to join on the "airlines" dataframe
 
 ```{r}
+avg_dep_delays <- my_flights %>% group_by(carrier) %>% summarize(avgDepDelay = mean(dep_delay))
 
-
-````
-
-Which airline had the smallest average departure delay? 
-
-
-
-```{r}
-
-
-
+avg_dep_delays <- left_join(avg_dep_delays, airlines)
 ```
 
+Which airline had the smallest average departure delay?
 
+```{r}
+avg_dep_delay %>% filter(avgDepDelay == min(avgDepDelay))
+```
 
-
-
-Examples from R4DS:    
+Examples from R4DS:
 
 ```{r}
 
@@ -77,13 +64,21 @@ top_dest
 
 ```
 
-Now you want to find each flight that went to one of those destinations. You could, of course, filter. But! Now you can semi-join: 
+Now you want to find each flight that went to one of those destinations. You could, of course, filter. But! Now you can semi-join:
 
 ```{r}
 flights %>% 
   semi_join(top_dest)
 ```
 
+a) What does anti_join(flights, airports, by = c("dest" = "faa")) tell you?
 
-What does anti_join(flights, airports, by = c("dest" = "faa")) tell you? What does anti_join(airports, flights, by = c("faa" = "dest")) tell you?
-Perform the two joins below and consider what the results are. 
+b) What does anti_join(airports, flights, by = c("faa" = "dest")) tell you? Perform the two joins below and consider what the results are.
+
+```{r}
+#a) Lists flights to airports not in the faa's airports table, aka international dests.
+anti_join(flights, airports, by = c("dest" = "faa"))
+
+#b) Lists airports you cannot flight to directly from NY airports.
+anti_join(airports, flights, by = c("faa" = "dest"))
+```
